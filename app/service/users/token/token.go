@@ -2,13 +2,14 @@ package token
 
 import (
 	"errors"
-	"github.com/dgrijalva/jwt-go"
 	"goskeleton/app/global/consts"
 	"goskeleton/app/global/my_errors"
 	"goskeleton/app/global/variable"
 	"goskeleton/app/http/middleware/my_jwt"
 	"goskeleton/app/model/users"
 	"time"
+
+	"github.com/dgrijalva/jwt-go"
 )
 
 // CreateUserFactory 创建 userToken 工厂

@@ -17,7 +17,7 @@ Token:
 
 
 Redis:
-  Host: "192.168.8.62"
+  Host: "101.33.219.49"
   Port: 6379
   Auth: ""
   MaxIdle: 10
