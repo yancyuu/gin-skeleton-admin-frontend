@@ -1,8 +1,6 @@
 package authorization
 
 import (
-	"github.com/dchest/captcha"
-	"github.com/gin-gonic/gin"
 	"goskeleton/app/global/consts"
 	"goskeleton/app/global/variable"
 	"goskeleton/app/service/users/curd"
@@ -10,6 +8,9 @@ import (
 	"goskeleton/app/utils/response"
 	"strconv"
 	"strings"
+
+	"github.com/dchest/captcha"
+	"github.com/gin-gonic/gin"
 )
 
 type HeaderParams struct {

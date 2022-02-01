@@ -3,13 +3,14 @@ package test
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/qifengzhang007/sql_res_to_tree"
 	"goskeleton/app/global/variable"
 	"goskeleton/app/utils/gorm_v2"
 	_ "goskeleton/bootstrap"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/qifengzhang007/sql_res_to_tree"
 )
 
 //  gorm v2  操作数据库单元测试

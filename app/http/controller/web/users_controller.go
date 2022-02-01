@@ -1,7 +1,6 @@
 package web
 
 import (
-	"github.com/gin-gonic/gin"
 	"goskeleton/app/global/consts"
 	"goskeleton/app/global/variable"
 	"goskeleton/app/http/middleware/my_jwt"
@@ -10,6 +9,8 @@ import (
 	userstoken "goskeleton/app/service/users/token"
 	"goskeleton/app/utils/response"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 type Users struct {
@@ -32,6 +33,7 @@ func (u *Users) Register(context *gin.Context) {
 
 //  2.用户登录
 func (u *Users) Login(context *gin.Context) {
+	println("Login")
 	userName := context.GetString(consts.ValidatorPrefix + "user_name")
 	pass := context.GetString(consts.ValidatorPrefix + "pass")
 	phone := context.GetString(consts.ValidatorPrefix + "phone")

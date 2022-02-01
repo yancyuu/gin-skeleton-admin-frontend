@@ -7,6 +7,7 @@ import (
 	"goskeleton/app/global/variable"
 	"goskeleton/app/http/middleware/my_jwt"
 	"goskeleton/app/model/users"
+	"goskeleton/app/model/usersV2"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -45,7 +46,7 @@ func (u *userToken) RecordLoginToken(userToken, clientIp string) bool {
 	if customClaims, err := u.userJwt.ParseToken(userToken); err == nil {
 		userId := customClaims.UserId
 		expiresAt := customClaims.ExpiresAt
-		return users.CreateUserFactory("").OauthLoginToken(userId, userToken, expiresAt, clientIp)
+		return users.CreateUserFactory("").OauthLoginToken(userId, userToken, expiresAt, clientIp) || usersV2.CreateUserFactory("").OauthLoginToken(userId, userToken, expiresAt, clientIp)
 	} else {
 		return false
 	}
@@ -58,9 +59,7 @@ func (u *userToken) TokenIsMeetRefreshCondition(token string) bool {
 	switch code {
 	case consts.JwtTokenOK, consts.JwtTokenExpired:
 		//在数据库的存储信息是否也符合过期刷新刷新条件
-		if users.CreateUserFactory("").OauthRefreshConditionCheck(customClaims.UserId, token) {
-			return true
-		}
+		return users.CreateUserFactory("").OauthRefreshConditionCheck(customClaims.UserId, token) || usersV2.CreateUserFactory("").OauthRefreshConditionCheck(customClaims.UserId, token)
 	}
 	return false
 }
@@ -73,7 +72,7 @@ func (u *userToken) RefreshToken(oldToken, clientIp string) (newToken string, re
 		if customClaims, err := u.userJwt.ParseToken(newToken); err == nil {
 			userId := customClaims.UserId
 			expiresAt := customClaims.ExpiresAt
-			if users.CreateUserFactory("").OauthRefreshToken(userId, expiresAt, oldToken, newToken, clientIp) {
+			if users.CreateUserFactory("").OauthRefreshToken(userId, expiresAt, oldToken, newToken, clientIp) || usersV2.CreateUserFactory("").OauthRefreshToken(userId, expiresAt, oldToken, newToken, clientIp) {
 				return newToken, true
 			}
 		}
@@ -102,12 +101,12 @@ func (u *userToken) isNotExpired(token string, expireAtSec int64) (*my_jwt.Custo
 	}
 }
 
-// IsEffective 判断token是否有效（未过期+数据库用户信息正常）
+// IsEffective 判断token是否有效（未过期+数据库，用户信息正常）
 func (u *userToken) IsEffective(token string) bool {
 	customClaims, code := u.isNotExpired(token, 0)
 	if consts.JwtTokenOK == code {
 		//if user_item := Model.CreateUserFactory("").ShowOneItem(customClaims.UserId); user_item != nil {
-		if users.CreateUserFactory("").OauthCheckTokenIsOk(customClaims.UserId, token) {
+		if users.CreateUserFactory("").OauthCheckTokenIsOk(customClaims.UserId, token) || usersV2.CreateUserFactory("").OauthCheckTokenIsOk(customClaims.UserId, token) {
 			return true
 		}
 	}

@@ -1,17 +1,19 @@
 package routers
 
 import (
-	"github.com/gin-contrib/pprof"
-	"github.com/gin-gonic/gin"
 	"goskeleton/app/global/consts"
 	"goskeleton/app/global/variable"
 	"goskeleton/app/http/controller/chaptcha"
 	"goskeleton/app/http/controller/web"
+	"goskeleton/app/http/controller/web/usersV2"
 	"goskeleton/app/http/middleware/authorization"
 	"goskeleton/app/http/middleware/cors"
 	validatorFactory "goskeleton/app/http/validator/core/factory"
 	"goskeleton/app/utils/gin_release"
 	"net/http"
+
+	"github.com/gin-contrib/pprof"
+	"github.com/gin-gonic/gin"
 )
 
 // 该路由主要设置 后台管理系统等后端应用路由
@@ -57,6 +59,43 @@ func InitWebRouter() *gin.Engine {
 		verifyCode.GET("/", (&chaptcha.Captcha{}).GenerateId)                          //  获取验证码ID
 		verifyCode.GET("/:captcha_id", (&chaptcha.Captcha{}).GetImg)                   // 获取图像地址
 		verifyCode.GET("/:captcha_id/:captcha_value", (&chaptcha.Captcha{}).CheckCode) // 校验验证码
+	}
+	v2Router := router.Group("/V2/")
+	{
+		// 创建一个websocket,如果ws需要账号密码登录才能使用，就写在需要鉴权的分组，这里暂定是开放式的，不需要严格鉴权，我们简单验证一下token值
+		v2Router.GET("ws", validatorFactory.Create(consts.ValidatorPrefix+"WebsocketConnect"))
+
+		//  【不需要token】中间件验证的路由  用户注册、登录
+		noAuth := v2Router.Group("users/") //authorization.CheckCasbinAuth()
+		{
+			// 关于路由的第二个参数用法说明
+			// 1.编写一个表单参数验证器结构体，参见代码：   app/http/validator/web/users/register.go
+			// 2.将以上表单参数验证器注册，遵守 键 =》值 格式注册即可 ，app/http/validator/common/register_validator/register_validator.go  20行就是注册时候的键 consts.ValidatorPrefix+"UsersRegister"
+			// 3.按照注册时的键，直接从容器调用即可 ：validatorFactory.Create(consts.ValidatorPrefix+"UsersRegister")
+			noAuth.POST("register", (&usersV2.UsersV2{}).Register) // 将公开注册渠道关闭
+			noAuth.Use(authorization.CheckCaptchaAuth()).POST("login", (&usersV2.UsersV2{}).Login)
+		}
+
+		// 刷新token
+		refreshToken := v2Router.Group("users/")
+		{
+			// 刷新token，当过期的token在允许失效的延长时间范围内，用旧token换取新token
+			refreshToken.Use(authorization.RefreshTokenConditionCheck()).POST("refreshtoken", (&usersV2.UsersV2{}).RefreshToken)
+		}
+
+		// 【需要token】中间件验证的路由
+		v2Router.Use(authorization.CheckTokenAuth(), authorization.CheckCasbinAuth())
+		{
+			// 用户组路由
+			users := v2Router.Group("users/")
+			{
+				// 用户获取动态菜单
+				users.GET("info", (&usersV2.UsersV2{}).UserInfo)
+				// 更新
+				users.POST("edit", (&usersV2.UsersV2{}).Edit)
+			}
+
+		}
 	}
 	//  创建一个后端接口路由组
 	backend := router.Group("/admin/")
